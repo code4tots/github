@@ -14,10 +14,10 @@ GL['r'] = 0
 GL['c'] = 0
 GL['map'] = [ [' '] * GL['C'] for x in range(GL['R']) ]
 GL['running'] = False
-def initModel(R,C):
+def initModel(R,C,r=0,c=0):
     # Set cursor position
-    GL['r'] = 0
-    GL['c'] = 0
+    GL['r'] = r
+    GL['c'] = c
     # Set dimensions
     GL['R'] = R
     GL['C'] = C
@@ -105,8 +105,13 @@ def drawView():
     
 # Glue code (Controller?)
 def main():
-    initModel(10,10)
-
+    from sys import argv
+    if len(argv) < 3:
+        print("Usage: %s [Rows] [Columns]" % argv[0])
+        return None
+    else:
+        initModel(int(argv[1]),int(argv[2]))
+        
     try:
         initView()
         GL['running'] = True
@@ -133,6 +138,9 @@ def main():
             # -- tick model --
             elif key == ord('t'):
                 tickModel()
+            # -- reset model --
+            elif key == ord('r'):
+                initModel(GL['R'],GL['C'], GL['r'], GL['c'])
             
         endView()
         print("Exited properly.")
