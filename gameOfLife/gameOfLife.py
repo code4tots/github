@@ -1,108 +1,144 @@
 #!/usr/bin/python
-# 3.27.2012
-# gameOfLife.py
+# gameOfLife.py (again!)
 
+# Headers
 import curses
-# Model stuff
 
-# Global variables (saved in GL)
+# Global instance, GL
 GL = {}
-GL['running'] = False
+
+# Model (State is stored in a global instance GL)
+GL['R'] = 0
+GL['C'] = 0
 GL['r'] = 0
 GL['c'] = 0
-GL['R'] = 10
-GL['C'] = 30
-GL['map'] = [ [0] * GL['C'] ] * GL['R']
+GL['map'] = [ [' '] * GL['C'] for x in range(GL['R']) ]
+GL['running'] = False
+def initModel(R,C):
+    # Set cursor position
+    GL['r'] = 0
+    GL['c'] = 0
+    # Set dimensions
+    GL['R'] = R
+    GL['C'] = C
+    # Build the map.
+    GL['map'] = [ [' '] * GL['C'] for x in range(GL['R']) ]
 def moveModelCursor(dr,dc):
     newR = GL['r'] + dr
     newC = GL['c'] + dc
     if newR >= 0 and newR < GL['R'] and newC >= 0 and newC < GL['C']:
         GL['r'] = newR
         GL['c'] = newC
-    else:
-        pass
-def resetModel(R,C):
-    GL['R'] = R
-    GL['C'] = C
-    GL['map'] = [ [0] * GL['C'] ] * GL['R']
 def toggleModel(r,c):
-    if GL['map'][r][c] == 0:
-        GL['map'][r][c] = 1
+    if GL['map'][r][c] == ' ':
+        GL['map'][r][c] = '*'
+    elif GL['map'][r][c] == '*':
+        GL['map'][r][c] = ' '
     else:
-        GL['map'][r][c] = 0
+        GL['map'][r][c] = '?'
+def toggleModelAtCursor():
+    toggleModel(GL['r'],GL['c'])
     
-# Enter UI loop -- all ncurses logic remains here
-def run():
-    # Initialization
-    stdscr = curses.initscr()
+# support methods for tickModel()
+def neighborModelCell(r,c,dr,dc):
+    R = (r+dr)%GL['R']
+    C = (c+dc)%GL['C']
+    return (R,C)
+def liveModelNeighborCount(r,c):
+    ret = 0
+    dx = (-1,0,1)
+    from itertools import product
+    f = lambda r,c,dr,dc : neighborModelCell(r,c,dr,dc)
+    dx2 = [ f(r,c,ri,ci) for (ri,ci) in product(dx,dx) if (ri,ci) != (0,0) ]
+    return len([ (ri,ci) for (ri,ci) in dx2 if GL['map'][ri][ci] == '*' ])
+# Tick model, per Conway's Game of Life.
+def tickModel():
+    newMap = [ [' '] * GL['C'] for x in range(GL['R']) ]
+    for r in range(GL['R']):
+        for c in range(GL['C']):
+            count = liveModelNeighborCount(r,c)
+            if count < 2 or count > 3:
+                newMap[r][c] = ' '
+            elif count == 3:
+                newMap[r][c] = '*'
+            elif count == 2:
+                newMap[r][c] = GL['map'][r][c]
+    GL['map'] = newMap
+
+# View (all ncurses logic remains here)
+def initView():
+    GL['scr'] = curses.initscr()
     curses.noecho()
     curses.raw()
-    stdscr.keypad(1)
-    # curses.curs_set(0)
-    curses.mousemask(1)
+    GL['scr'].keypad(1)
     
+def endView():
     curses.endwin()
     
-    # Some calculations.
-    maxR, maxC = stdscr.getmaxyx()
-    lowR = (maxR - GL['R'])/2
-    lowC = (maxC - GL['C'])/2
+def getKey():
+    return GL['scr'].getch()
     
-    GL['running'] = True
-    while GL['running']:
-        # Draw model.
-        # Clear
-        stdscr.erase()
-        # Draw border.
-        for r in range(GL['R']):
-            stdscr.addch(r+lowR,lowC-1,'|')
-            stdscr.addch(r+lowR,lowC+GL['C'],'|')
+def drawView():
+    GL['scr'].erase()
+    R, C = GL['scr'].getmaxyx()
+    lowR = (R - GL['R'])/2
+    lowC = (C - GL['C'])/2
+    
+    # Draw the borders
+    for r in range(GL['R']):
+        GL['scr'].addch(r+lowR,lowC-1,'|')
+        GL['scr'].addch(r+lowR,lowC+GL['C'],'|')
+    for c in range(GL['C']):
+        GL['scr'].addch(lowR-1,lowC+c,'-')
+        GL['scr'].addch(lowR+GL['R'],lowC+c,'-')
+    
+    # Draw the map
+    for r in range(GL['R']):
         for c in range(GL['C']):
-            stdscr.addch(lowR-1,c+lowC,'-')
-            stdscr.addch(lowR+GL['R'],c+lowC,'-')
-        # Draw map.
-        for r in range(GL['R']):
-            for c in range(GL['C']):
-                toDraw = GL['map'][r][c]
-                if toDraw == 0:
-                    stdscr.addch(r+lowR,c+lowC,' ')
-                elif toDraw == 1:
-                    stdscr.addch(r+lowR,c+lowC,'*')
-        # Move cursor to right position
-        stdscr.move(GL['r']+lowR,GL['c']+lowC)
-        stdscr.refresh()
-        
-        # Handle input.
-        key = stdscr.getch()
-        # -- exit -- (key == 3 ==> Ctrl-c)
-        if key == ord('q') or key == 3: 
-            GL['running'] = False
-        elif key == curses.KEY_MOUSE:
-            pass
-        # -- movement --
-        elif key == ord('a'):
-            moveModelCursor(0,-1)
-        elif key == ord('d'):
-            moveModelCursor(0, 1)
-        elif key == ord('w'):
-            moveModelCursor(-1,0)
-        elif key == ord('s'):
-            moveModelCursor( 1,0)
-        # -- Toggle position --
-        elif key == ord(' '):
-            #toggleModel(GL['r'],GL['c'])
-            GL['map'][GL['r']][GL['c']] = 1
+            GL['scr'].addch(lowR+r,lowC+c,GL['map'][r][c])
     
-    # Clean up
-    curses.endwin()
-    print("Exited properly.")
+    # Move the cursor to position as indicated by the model.
+    GL['scr'].move(GL['r']+lowR, GL['c']+lowC)
     
+    # Finally make sure it is drawn to the screen
+    GL['scr'].refresh()
+    
+# Glue code (Controller?)
 def main():
+    initModel(10,10)
+
     try:
-        run()
+        initView()
+        GL['running'] = True
+        while GL['running']:
+            drawView()
+            
+            # Handle input
+            key = getKey()
+            # -- exit --
+            if key == ord('q') or key == 3:
+                GL['running'] = False
+            # -- movement --
+            elif key == ord('a'):
+                moveModelCursor(0,-1)
+            elif key == ord('d'):
+                moveModelCursor(0, 1)
+            elif key == ord('w'):
+                moveModelCursor(-1,0)
+            elif key == ord('s'):
+                moveModelCursor( 1,0)
+            # -- toggle cell --
+            elif key == ord(' '):
+                toggleModelAtCursor()
+            # -- tick model --
+            elif key == ord('t'):
+                tickModel()
+            
+        endView()
+        print("Exited properly.")
     except:
-        curses.endwin()
-        print("Something was wrong.")
+        endView()
+        print("Something went wrong.")
     
 if __name__ == '__main__':
     main()
