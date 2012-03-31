@@ -1,0 +1,6 @@
+Declare x to 1.
+Mark location as entry.
+Add x and 1.
+Set x to that.
+Announce x.
+If x is less than 10, then goto entry.

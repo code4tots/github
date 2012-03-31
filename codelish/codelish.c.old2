@@ -1,0 +1,80 @@
+/*
+codelish.c
+*/
+#include<stdlib.h>
+#include<stdio.h>
+#include<string.h>
+
+// word util methods
+char* newWord();
+char* newWordFromLiteral(const char* word);
+void wordCat(char* dest, char* src);
+void wordCharCat(char* dest, char ch);
+void deleteWord(char* word);
+size_t lengthOfWord(char* word);
+// sentence util methods
+char** newSentence();
+void setenceCat(char** dest, char** src);
+void sentenceWordCat(char** dest, char* word);
+void deleteSentence(char** sentence);
+size_t lengthOfSentence(char** sentence);
+
+
+// main
+int main(int argc, char* argv[]){
+    int i;
+    
+    char* v = malloc(3*sizeof(char));
+    v[0] = 'G';
+    v[1] = 'o';
+    v[2] = '\0';
+    charWordCat(v,'w');
+    
+    printf("%s\n%d\n",v,v[3]);
+    
+    return 0;
+}
+
+// implementaitons.
+// word util methods
+char* newWord(){
+    char* ret = malloc(1 * sizeof(char));
+    ret[0] = '\0';
+    return ret;
+}
+char* newWordFromLiteral(const char* word){
+    char* ret = malloc((1+strlen(word))*sizeof(char));
+    strcpy(ret, word);
+    return ret;
+}
+void wordCat(char* dest, char* src){
+    size_t destLen = strlen(dest);
+    dest = realloc(dest, (1+destLen+strlen(src))*sizeof(char));
+    char* newdest = dest + destLen;
+    strcpy(newdest,src);
+}
+void wordCharCat(char* dest, char ch){
+    size_t destLen = strlen(dest);
+    dest = realloc( dest, (2+destLen) * sizeof(char) );
+    dest[destLen] = ch;
+    dest[destLen+1] = '\0';
+}
+void deleteWord(char* word){
+    free(word);
+}
+size_t lengthOfWord(char* word){return strlen(word);}
+// sentence util methods
+char** newSentence(){
+    char** ret = malloc(1 * sizeof(char*));
+    ret[0] = NULL;
+    return ret;
+}
+void deleteSentence(char** sentence){
+    int cur = 0;
+    while (sentence[cur] != NULL){
+        deleteWord(sentence[cur]);
+        cur++;
+    }
+    free(sentence);
+}
+size_t sentenceLength(char** sentence){size_t ret = 0; while (sentence[ret] != NULL){ret++;} return ret;}

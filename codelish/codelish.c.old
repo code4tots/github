@@ -1,0 +1,108 @@
+/*
+codelish.c
+*/
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+// Load program text from file.
+char* program;
+size_t programsize;
+size_t programcapacity;
+void loadProgramFromFile(const char* filename);
+void deleteProgramText(){ free(program); }
+// Tokenize into "words"
+char** programtokens;
+size_t* programtokensizes;
+size_t numberofprogramtokens;
+void tokenizeProgramFromCharPtr(char* program);
+void deleteProgramTokens(){
+    int i;
+    for (i = 0; i < numberofprogramtokens; i++){
+        free(programtokens[i]);
+    }
+    free(programtokensizes);
+}
+// Parse into "sentences"
+char*** programparsed;
+size_t numberofprogramsentences;
+size_t* programsentencesizes;
+size_t** programwordsizes;
+void addWordToSentence(char** sentence, size_t numberofwords, char* word){
+    
+}
+void parseProgramFromTokens(char** programtokens){
+    
+}
+// Execute.
+
+
+// main
+int main(int argc, char* argv[]){
+	if (argc < 2){
+		printf("usage: %s [program file]\n", argv[0]);
+	} else {
+		loadProgramFromFile(argv[1]);
+        
+        FILE* fout = fopen("sample.txt","w");
+        fwrite(program, programsize, 1, fout);
+        fclose(fout);
+        
+        tokenizeProgramFromCharPtr(program);
+	}
+    int i;
+    for (i = 0; i < 10 && i < numberofprogramtokens; i++){
+        printf("token %d: %s\n", i, programtokens[i]);
+    }
+    printf("%lu tokens,\n", numberofprogramtokens);
+    
+    deleteProgramTokens();
+    deleteProgramText();
+	return 0;
+}
+// Load program text from file.
+void loadProgramFromFile(const char* filename){
+	FILE* fin = fopen(filename, "r");
+	
+	programcapacity = 0;
+	programsize = 0;
+	program = NULL;
+	
+	size_t increment = 1024;
+	while (increment == 1024){
+		programcapacity += 1024;
+		program = realloc(program, programcapacity);
+		
+		increment = fread(program + programsize, 1, 1024, fin);
+		programsize += increment;
+	}
+}
+// Tokenize into "words"
+void tokenizeProgramFromCharPtr(char* localprogram){
+    char* pch;
+    // the delimiters that are chosen are the ones
+    // that isspace considers to be whitespace:
+    // http://www.cplusplus.com/reference/clibrary/cctype/isspace/
+    pch = strtok(localprogram, " \t\n\v\f\r");
+    programtokens = NULL;
+    programtokensizes = NULL;
+    numberofprogramtokens = 0;
+    
+    while(pch != NULL){
+        // Increment the number of programtokens
+        numberofprogramtokens++;
+        // allocate memory to store the next token's size
+        programtokensizes = realloc(programtokensizes, numberofprogramtokens * sizeof(size_t));
+        // reserve extra space for null character.
+        programtokensizes[numberofprogramtokens-1] = strlen(pch)+1;
+        // allocate memory to store the location of the next token's content.
+        programtokens = realloc(programtokens, numberofprogramtokens * sizeof(char*));
+        // allocate memory to store the next token's content.
+        programtokens[numberofprogramtokens-1] = malloc( (programtokensizes[numberofprogramtokens-1]+1) * sizeof(char) );
+        // now copy pch onto programtokens.
+        strcpy(programtokens[numberofprogramtokens-1], pch);
+        
+        pch = strtok(NULL, " \t\n\v\f\r");
+    }
+}
+
+
