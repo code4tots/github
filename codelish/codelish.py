@@ -1,133 +1,58 @@
 #!/usr/bin/python
-# 3.26.2012
-# codelish.py
-#
 
-# Load entire program text in one piece.
-def loadFullTextFromFilename(filename):
-    return open(filename,'r').read()
-
-# Break up text into words, by whitespace.
-def splitTextIntoWords(text):
-    return text.split()
+# --> Model.
+class Model:
+    def __init__(self):
+        pass
     
-# Then parse words into sentences.
-def groupWordsIntoSentences(words):
-    ret = []
-    currentSentence = []
-    currentPosition = 0
-    
-    while currentPosition < len(words):
-        word = words[currentPosition]
-        
-        # Handle possibility of comment
-        if word[0] == '[':
-            while words[currentPosition][-1] != ']' and currentPosition < len(words):
-                currentPosition += 1
-            currentPosition += 1
-        # Othwerise, add to currentSentence
-        else:
-            # Before adding word, check to see if it is the end of a sentence.
-            if word[-1] == '.':
-                word = word[:-1]
-                if word != '':
-                    currentSentence.append(word)
-                ret.append(currentSentence)
-                currentSentence = []
-            # If it's not the end of a sentence, it's safe to just add it.
-            else:
-                currentSentence.append(word)
-                
-            currentPosition += 1
-    # Any trailing words without periods are lost.
-    return ret
-
-# Now execute the parsed program.
-def executeProgram(sentences):
-    that = 0
-    
-    variableStack = [ ['that', that] ]
-    locationStack = [ ['beginning', 0] ]
-    currentPosition = 0
-    
-    # Process marked locations.
-    for position in range(len(sentences)):
-        if ' '.join(sentences[position][0:3]) == "Mark location as":
-            locationStack.append([sentences[position][3],position])\
-    
-    def findValueFromKey(key):
-        try:
-            return int(key)
-        except:
-            pass
+    # static methods
+    @staticmethod
+    def breakTextIntoSentences(text):
+        def textBeginsWith(text,s):
+            return len(text) >= len(s) and text[:len(s)]==s
             
-        for pair in reversed(variableStack):
-            if pair[0] == key:
-                return pair[1]
-        print("%s: undeclared variable\n" % key)
-    def findPairFromKey(key):
-        for pair in reversed(variableStack):
-            if pair[0] == key:
-                return pair
-        print("%s: undeclared variable\n" % key)
-    def findLocationFromName(name):
-        for pair in reversed(locationStack):
-            if pair[0] == name:
-                return pair[1]
-        print("%s: unknown location\n" % name)
-    
-    running = True
-    while running and currentPosition < len(sentences):
-        sentence = sentences[currentPosition]
-        # print( "sentence: %s" % ' '.join(sentence)+'.')
+        def f(text,sentencesSoFar=[], currentSentence=''):
+            if text=='':
+                return sentencesSoFar
+            elif textBeginsWith(text,'.'):
+                sentencesSoFar.append(currentSentence)
+                return f(text[1:],sentencesSoFar,'')
+            elif textBeginsWith(text,"\nBegin Literal Block\n"):
+                VAR = {}
+                VAR['cutoutindex'] = None
+                for i in range(len(text)):
+                    if textBeginsWith(text[i:],"\nEnd Literal Block\n"):
+                        VAR['cutoutindex'] = i+len("\nEnd Literal Block\n")
+                        break
+                return f(text[VAR['cutoutindex']:],sentencesSoFar,currentSentence+text[:VAR['cutoutindex']])
+            else:
+                return f(text[1:],sentencesSoFar,currentSentence+text[0])
         
-        if sentence[0] == "Declare" and sentence[2] == "to":
-            variableStack.append( [sentence[1], int(sentence[3])] )
-            currentPosition += 1
-        elif sentence[0] == "Set" and sentence[2] == "to":
-            pair = findPairFromKey(sentence[1])
-            pair[1] = findValueFromKey(sentence[3])
-            currentPosition += 1
-        elif sentence[0] == "Add" and sentence[2] == "and":
-            x = findValueFromKey(sentence[1])
-            y = findValueFromKey(sentence[3])
-            findPairFromKey('that')[1] = x + y
-            currentPosition += 1
-        elif sentence[0] == "Multiply" and sentence[2] == "and":
-            x = findValueFromKey(sentence[1])
-            y = findValueFromKey(sentence[3])
-            findPairFromKey('that')[1] = x * y
-            currentPosition += 1
-        elif sentence[0] == "Print":
-            print( findValueFromKey(sentence[1]) )
-            currentPosition += 1
-        elif sentence[0] == "Announce":
-            print( ("%s = " % sentence[1]) + str(findValueFromKey(sentence[1])) )
-            currentPosition += 1
-        elif ' '.join(sentence[0:3]) == "Mark location as":
-            # Marked locations should have been processed before beginning execution loop.
-            currentPosition += 1
-        elif sentence[0] == "If" and ' '.join(sentence[2:5]) == "is less than" and ' '.join(sentence[6:8]) == "then goto":
-            # sentence[5] may end with a comma.
-            if sentence[5][-1] == ',':
-                sentence[5] = sentence[5][:-1]
-            if findValueFromKey(sentence[1]) < findValueFromKey(sentence[5]):
-                currentPosition = findLocationFromName(sentence[8])
-            else:
-                currentPosition += 1
-        elif sentence[0] == "If" and sentence[2] == "is" and ' '.join(sentence[4:6]) == "then goto":
-            # sentence[3] may end with a comma.
-            if sentence[3][-1] == ',':
-                sentence[3] = sentence[3][:-1]
-            if findValueFromKey(sentence[1]) == findValueFromKey(sentence[3]):
-                currentPosition = findLocationFromName(sentence[6])
-            else:
-                currentPosition += 1
-        elif sentence[0] == "Finish":
-            running = False
-            currentPosition = len(sentences)
-        else:
-            print( "Unknown command: %s" % (' '.join(sentence))+'.' )
-            currentPosition += 1
+        return f(text)
+        
+    @staticmethod
+    def breakSentenceIntoTokens(sentence):
+        pass
     
-executeProgram(groupWordsIntoSentences(splitTextIntoWords(loadFullTextFromFilename("prog.lish"))))
+    @staticmethod
+    def unify(call, signature):
+        ret = None
+        if len(call) != len(signature):
+            ret = None
+        else:
+            length = len(call)
+            ret = {}
+            for i in range(length):
+                if signature[i][0] == '@':
+                    if ret != None:
+                        ret[signature[i][1:]] = call[i]
+                elif signature[i] != call[i]:
+                    ret = None
+        return ret
+
+#print(Model.breakTextIntoSentences(''))
+
+m = Model.breakTextIntoSentences("Hello World. Another sentence. Yet another sentence. This one has \nBegin Literal Block\n A LITERAL BLOCK...\nEnd Literal Block\n some weird literal block.")
+for x in m:
+    print(x)
+#print(Model.unify(['hey','world'],['hey','@whatToSay']))
