@@ -1,0 +1,84 @@
+<html>
+
+<head>
+<title>Title</title>
+
+<script type="text/javascript">
+// from http://stackoverflow.com/questions/2142535/how-to-clear-the-canvas-for-redrawing
+CanvasRenderingContext2D.prototype.clear = function (preserveTransform) {
+  if (preserveTransform) {
+    this.save();
+    this.setTransform(1, 0, 0, 1, 0, 0);
+  }
+
+  this.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+  if (preserveTransform) {
+    this.restore();
+  }         
+};
+
+
+
+
+
+
+
+/* Global variables */
+
+// View (UI)
+var canvas;
+var context;
+
+// Model
+var model;
+
+
+
+
+
+/* Methods */
+// create object.
+
+function onKeyDown(evt){
+    switch(evt.keyCode) {
+        case 38: /* Up arrow was pressed */
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "rgb(0, 100, 200)";
+            ctx.fillText ('Up arrow was pressed!', 10, 10);
+            break;
+        default:
+            redraw();
+            break;
+    }
+}
+// redraw canvas based on model.
+function redraw(){
+    ctx.clear();
+    
+    ctx.fillStyle = "rgb(200, 0, 0)";
+    ctx.fillRect (10, 10, 55, 50);
+    
+    ctx.fillStyle = "rgba(0, 0, 200, 0.5)";
+    ctx.fillRect(30, 30, 55, 50);
+    
+}
+
+
+function onLoadMethod(){
+    canvas = document.getElementById("canvas");
+    ctx = canvas.getContext("2d");
+    redraw();
+    
+    window.addEventListener('keydown', onKeyDown, true);
+}
+</script>
+</head>
+
+
+<body onload="onLoadMethod();">
+    <canvas id="canvas" style="border: none;" width="300" height="300"></canvas>
+</body>
+
+
+</html>

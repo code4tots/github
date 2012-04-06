@@ -64,14 +64,14 @@ void run(){
         case '-':
             selectTower(-1);
             break;
+        case '0':
         case '1':
         case '2':
-        case '3':
             if (srcTower == -1){
-                selectTower(curChar - '1');
+                selectTower(curChar - '0');
             }
             else {
-                moveToTower(curChar - '1');
+                moveToTower(curChar - '0');
             }
             break;
         }
@@ -107,33 +107,31 @@ void drawTower(int r, int c, int tower){
     
 }
 void draw(){
-    erase();
-
     int r, c, i, j, maxR, maxC, bottomR, leftC;
     getmaxyx(stdscr,maxR,maxC);
     bottomR = (maxR + N) / 2;
     leftC = (maxC - (3 * (N+1)) )/ 2;
     
     mvprintw(bottomR - N - 3, leftC, "Press q to exit\n");
-    mvprintw(bottomR - N - 2, leftC, "Towers are numbered 1, 2, 3\n");
+    mvprintw(bottomR - N - 2, leftC, "Towers are numbered 0, 1, 2\n");
     for (c = 0; c < 3; c++) {
         drawTower(bottomR, leftC + (N+1) * c, c);
         
         char stringBuffer[20];
-        sprintf(stringBuffer, "%d", c+1);
+        sprintf(stringBuffer, "%d", c);
         
         mvprintw(bottomR+1, leftC + (N+1) * c + (N / 2) - 1, stringBuffer);
     }
     
     if (towerError){
-        mvprintw(bottomR+4, leftC-5, "You tried to move a larger disk on top of a larger disk\n");
+        mvprintw(bottomR+4, leftC, "You tried to move a larger disk on top of a larger disk\n");
         towerError = FALSE;
     }
     else if (srcTower == -1){
         mvprintw(bottomR+4, leftC, "No towers are selected\n");
     }
     else {
-        mvprintw(bottomR+4, leftC, "Tower %d selected\n", srcTower+1);
+        mvprintw(bottomR+4, leftC, "Tower %d selected\n", srcTower);
     }
     
     refresh();

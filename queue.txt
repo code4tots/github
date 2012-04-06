@@ -1,0 +1,3 @@
+ * Weighted wristbands --> made of dimes.
+ * Write a book on algebra/topology --> that embodies intuition.
+ * Create a religion worshiping The Selection --> Natural selection governs the universe. We are part of a whole, the way individual cells are part of us. We are a pattern --> individual cells and molecules that constitute "us" at this very moment is irrelevant; they may be replaced, it is the way they are arranged that make us "us". The Religion should also be decentralized, the way git and mercurial are decentralized. Although we might have particular interest regarding particular branches, it should be commonplace and convenient for people to be able to "push", "pull", and "commit" to their religion.
